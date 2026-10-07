@@ -19,6 +19,8 @@ struct SignView: View {
 	@State private var showDylibPicker = false
 	@State private var stage: String?
 	@State private var errorMessage: String?
+	/// Installed once this sheet has fully closed; presenting the install sheet sooner can be dropped.
+	@State private var installAfterDismiss: LibraryApp?
 
 	private var certificate: SigningCertificate? {
 		certificates.certificates.first { $0.id == certificateID }
@@ -190,6 +192,9 @@ struct SignView: View {
 			}
 		}
 		.interactiveDismissDisabled(stage != nil)
+		.onDisappear {
+			if let installAfterDismiss { installer.install(installAfterDismiss) }
+		}
 	}
 
 	private func copyToTemp(_ url: URL) -> URL? {
@@ -226,11 +231,8 @@ struct SignView: View {
 				library.add(signed)
 				if options.deleteUnsignedAfterSigning { library.delete(app) }
 				stage = nil
+				if options.installAfterSigning { installAfterDismiss = signed }
 				dismiss()
-				if options.installAfterSigning {
-					try? await Task.sleep(nanoseconds: 400_000_000)
-					installer.install(signed)
-				}
 			} catch {
 				stage = nil
 				errorMessage = error.localizedDescription

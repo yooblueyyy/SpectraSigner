@@ -33,6 +33,8 @@ final class InstallServer {
 
 	private let payload: Payload
 	private let identity: SecIdentity
+	/// The leaf certificate followed by its intermediates, sent during the TLS handshake.
+	private let chain: [SecCertificate]
 	let host: String
 	private let token = UUID().uuidString.lowercased()
 	private var listener: NWListener?
@@ -47,8 +49,9 @@ final class InstallServer {
 	init(payload: Payload) throws {
 		let loaded = try Self.loadIdentity()
 		self.payload = payload
-		self.identity = loaded.0
-		self.host = loaded.1
+		self.identity = loaded.identity
+		self.chain = loaded.chain
+		self.host = loaded.host
 	}
 
 	private(set) var port: UInt16 = 0
@@ -63,7 +66,7 @@ final class InstallServer {
 
 	static var isAvailable: Bool { Bundle.main.url(forResource: "server", withExtension: "p12") != nil }
 
-	private static func loadIdentity() throws -> (SecIdentity, String) {
+	private static func loadIdentity() throws -> (identity: SecIdentity, chain: [SecCertificate], host: String) {
 		guard
 			let p12URL = Bundle.main.url(forResource: "server", withExtension: "p12"),
 			let data = try? Data(contentsOf: p12URL)
@@ -85,12 +88,20 @@ final class InstallServer {
 		{
 			host = name.hasPrefix("*.") ? "local" + name.dropFirst(1) : name
 		}
-		return (identityRef as! SecIdentity, host)
+		let identity = identityRef as! SecIdentity
+		var chain = first[kSecImportItemCertChain as String] as? [SecCertificate] ?? []
+		if chain.isEmpty {
+			var leaf: SecCertificate?
+			SecIdentityCopyCertificate(identity, &leaf)
+			chain = leaf.map { [$0] } ?? []
+		}
+		return (identity, chain, host)
 	}
 
 	func start(ready: @escaping (Result<Void, Error>) -> Void) {
 		let tls = NWProtocolTLS.Options()
-		guard let secIdentity = sec_identity_create(identity) else {
+		// Without the intermediates iOS can't verify the manifest's certificate and never shows the install prompt.
+		guard let secIdentity = sec_identity_create_with_certificates(identity, chain as CFArray) ?? sec_identity_create(identity) else {
 			ready(.failure(Failure.badCertificate))
 			return
 		}
