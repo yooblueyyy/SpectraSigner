@@ -40,6 +40,21 @@ struct InstallSheet: View {
 				status
 			}
 
+			if !installer.log.isEmpty {
+				ScrollView {
+					VStack(alignment: .leading, spacing: 2) {
+						ForEach(Array(installer.log.enumerated()), id: \.offset) { _, line in
+							Text(line)
+						}
+					}
+					.font(.caption2.monospaced())
+					.foregroundStyle(.secondary)
+					.frame(maxWidth: .infinity, alignment: .leading)
+					.textSelection(.enabled)
+				}
+				.frame(maxHeight: 90)
+			}
+
 			Spacer(minLength: 0)
 
 			buttons

@@ -17,6 +17,8 @@ final class InstallManager: ObservableObject {
 	@Published private(set) var state: State = .idle
 	@Published private(set) var app: LibraryApp?
 	@Published var isPresented = false
+	/// What happened during the current install, shown in the sheet to troubleshoot a missing prompt.
+	@Published private(set) var log: [String] = []
 
 	private var server: InstallServer?
 	private var stopWork: DispatchWorkItem?
@@ -32,6 +34,7 @@ final class InstallManager: ObservableObject {
 		guard app.kind == .signed else { return }
 		cleanup()
 		self.app = app
+		log = []
 		state = .starting
 		isPresented = true
 
@@ -62,6 +65,9 @@ final class InstallManager: ObservableObject {
 		server.onTransferComplete = { [weak self] in
 			Task { @MainActor in self?.transferFinished() }
 		}
+		server.onEvent = { [weak self] event in
+			Task { @MainActor in self?.note(event) }
+		}
 
 		KeepAlive.shared.begin()
 		server.start { [weak self] result in
@@ -69,7 +75,8 @@ final class InstallManager: ObservableObject {
 			switch result {
 			case .success:
 				self.state = .waitingForPrompt
-				UIApplication.shared.open(server.installURL)
+				self.note("Server ready at \(server.host):\(server.port)")
+				self.openInstallLink(server.installURL)
 			case .failure(let error):
 				self.state = .failed(error.localizedDescription)
 				self.cleanup()
@@ -83,7 +90,18 @@ final class InstallManager: ObservableObject {
 			if let app { install(app) }
 			return
 		}
-		UIApplication.shared.open(server.installURL)
+		openInstallLink(server.installURL)
+	}
+
+	private func openInstallLink(_ url: URL) {
+		UIApplication.shared.open(url) { [weak self] opened in
+			Task { @MainActor in self?.note(opened ? "Asked iOS to install" : "iOS refused the install link") }
+		}
+	}
+
+	private func note(_ event: String) {
+		log.append(event)
+		if log.count > 30 { log.removeFirst(log.count - 30) }
 	}
 
 	func dismiss() {

@@ -45,6 +45,8 @@ final class InstallServer {
 	var onProgress: ((Int64, Int64) -> Void)?
 	/// Called once the whole .ipa has been delivered to iOS.
 	var onTransferComplete: (() -> Void)?
+	/// Human-readable events (connections, TLS errors, requests) for troubleshooting.
+	var onEvent: ((String) -> Void)?
 
 	init(payload: Payload) throws {
 		let loaded = try Self.loadIdentity()
@@ -58,10 +60,10 @@ final class InstallServer {
 	private var baseURL: String { "https://\(host):\(port)/\(token)" }
 	var manifestURL: URL { URL(string: "\(baseURL)/manifest.plist")! }
 
-	/// The link that asks iOS to install the app.
+	/// The link that asks iOS to install the app. The manifest URL goes in unencoded, as Feather does;
+	/// percent-encoding every character of it can stop iOS from showing the prompt.
 	var installURL: URL {
-		let encoded = manifestURL.absoluteString.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""
-		return URL(string: "itms-services://?action=download-manifest&url=\(encoded)")!
+		URL(string: "itms-services://?action=download-manifest&url=\(manifestURL.absoluteString)")!
 	}
 
 	static var isAvailable: Bool { Bundle.main.url(forResource: "server", withExtension: "p12") != nil }
@@ -148,8 +150,18 @@ final class InstallServer {
 	// MARK: - HTTP
 
 	private func accept(_ connection: NWConnection) {
-		connection.stateUpdateHandler = { state in
-			if case .failed = state { connection.cancel() }
+		connection.stateUpdateHandler = { [weak self] state in
+			switch state {
+			case .ready:
+				self?.onEvent?("iOS connected")
+			case .failed(let error):
+				self?.onEvent?("Connection failed: \(error.localizedDescription)")
+				connection.cancel()
+			case .waiting(let error):
+				self?.onEvent?("Connection waiting: \(error.localizedDescription)")
+			default:
+				break
+			}
 		}
 		connection.start(queue: queue)
 		receiveRequest(on: connection, buffer: Data())
@@ -186,6 +198,7 @@ final class InstallServer {
 			}
 		}
 
+		onEvent?("\(method) \(path.hasPrefix("/\(token)/") ? String(path.dropFirst(token.count + 1)) : path)")
 		guard path.hasPrefix("/\(token)/") else { return sendStatus(404, on: connection) }
 
 		switch path.dropFirst(token.count + 2) {
