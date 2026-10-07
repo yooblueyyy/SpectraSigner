@@ -150,10 +150,11 @@ final class InstallServer {
 	// MARK: - HTTP
 
 	private func accept(_ connection: NWConnection) {
+		onEvent?("Incoming connection from \(connection.endpoint)")
 		connection.stateUpdateHandler = { [weak self] state in
 			switch state {
 			case .ready:
-				self?.onEvent?("iOS connected")
+				self?.onEvent?("TLS handshake OK")
 			case .failed(let error):
 				self?.onEvent?("Connection failed: \(error.localizedDescription)")
 				connection.cancel()

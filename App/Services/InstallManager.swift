@@ -76,7 +76,10 @@ final class InstallManager: ObservableObject {
 			case .success:
 				self.state = .waitingForPrompt
 				self.note("Server ready at \(server.host):\(server.port)")
-				self.openInstallLink(server.installURL)
+				Task { @MainActor in
+					await self.selfTest(server.manifestURL)
+					self.openInstallLink(server.installURL)
+				}
 			case .failure(let error):
 				self.state = .failed(error.localizedDescription)
 				self.cleanup()
@@ -91,6 +94,20 @@ final class InstallManager: ObservableObject {
 			return
 		}
 		openInstallLink(server.installURL)
+	}
+
+	/// Fetches the manifest the way iOS will (DNS, TLS, HTTP), so the log shows where a missing prompt fails.
+	private func selfTest(_ url: URL) async {
+		var request = URLRequest(url: url)
+		request.timeoutInterval = 8
+		do {
+			let (data, response) = try await URLSession.shared.data(for: request)
+			let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+			note("Self-test: HTTP \(status), \(data.count) bytes")
+		} catch {
+			let nsError = error as NSError
+			note("Self-test failed: \(nsError.localizedDescription) (\(nsError.domain) \(nsError.code))")
+		}
 	}
 
 	private func openInstallLink(_ url: URL) {
