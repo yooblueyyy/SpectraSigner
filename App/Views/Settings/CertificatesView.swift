@@ -156,7 +156,7 @@ struct AddCertificateView: View {
 			}
 			.fileImporter(
 				isPresented: $showPicker,
-				allowedContentTypes: [.pkcs12, .mobileProvision, .data],
+				allowedContentTypes: [.pkcs12, .mobileProvision],
 				allowsMultipleSelection: true
 			) { result in
 				switch result {
@@ -179,18 +179,16 @@ struct AddCertificateView: View {
 	private func receive(_ urls: [URL]) {
 		error = nil
 		for url in urls {
+			let ext = url.pathExtension.lowercased()
+			guard ["p12", "pfx", "mobileprovision"].contains(ext) else {
+				error = "\(url.lastPathComponent) isn't a certificate (.p12) or provisioning profile (.mobileprovision)."
+				continue
+			}
 			guard let local = copyToTemp(url) else {
 				error = "Couldn't read \(url.lastPathComponent)."
 				continue
 			}
-			switch url.pathExtension.lowercased() {
-			case "p12", "pfx":
-				p12 = local
-			case "mobileprovision", "provisionprofile":
-				profile = local
-			default:
-				if pickTarget == .profile { profile = local } else { p12 = local }
-			}
+			if ext == "mobileprovision" { profile = local } else { p12 = local }
 		}
 	}
 

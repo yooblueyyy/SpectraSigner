@@ -38,6 +38,7 @@ final class SourceStore: ObservableObject {
 
 	private static let file = "sources"
 	private static let builtinInstalledKey = "builtinSourcesInstalled.v1"
+	private static let builtinOfferedKey = "builtinSourcesOffered"
 	static let userCategory = "Added by You"
 
 	/// Display order for source categories.
@@ -57,11 +58,27 @@ final class SourceStore: ObservableObject {
 
 	init() {
 		sources = Persistence.load([SavedSource].self, from: Self.file) ?? []
-		if !UserDefaults.standard.bool(forKey: Self.builtinInstalledKey) {
-			installBuiltins()
-			UserDefaults.standard.set(true, forKey: Self.builtinInstalledKey)
-		}
+		addNewBuiltins()
 		loadCache()
+	}
+
+	/// Adds built-in sources this install hasn't been offered yet. Ones the user removed stay removed.
+	private func addNewBuiltins() {
+		let defaults = UserDefaults.standard
+		var offered = Set(defaults.stringArray(forKey: Self.builtinOfferedKey) ?? [])
+		if offered.isEmpty && defaults.bool(forKey: Self.builtinInstalledKey) {
+			// Upgrading from 1.1, which shipped the first 129 entries of the list.
+			offered = Set(Self.builtin.prefix(129).map(\.url.absoluteString))
+		}
+		let present = Set(sources.map(\.url))
+		var changed = false
+		for item in Self.builtin where !offered.contains(item.url.absoluteString) && !present.contains(item.url) {
+			sources.append(SavedSource(url: item.url, name: item.name, iconURL: nil, added: Date(), category: item.category, isBuiltin: true))
+			changed = true
+		}
+		defaults.set(Self.builtin.map(\.url.absoluteString), forKey: Self.builtinOfferedKey)
+		defaults.set(true, forKey: Self.builtinInstalledKey)
+		if changed { save() }
 	}
 
 	enum Failure: LocalizedError {
