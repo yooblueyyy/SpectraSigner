@@ -93,11 +93,6 @@ struct SignView: View {
 							}
 							if let certificate {
 								CertificateSummary(certificate: certificate)
-								if !certificate.isWildcard {
-									Label("This profile is for a specific App ID. The bundle ID will be changed to match it.", systemImage: "info.circle")
-										.font(.caption)
-										.foregroundStyle(.secondary)
-								}
 							}
 						}
 					}
@@ -206,15 +201,8 @@ struct SignView: View {
 	}
 
 	private func sign() {
-		var options = options
-		if !options.adhoc, let certificate, !certificate.isWildcard, options.bundleID.isEmpty {
-			// A non-wildcard profile only works for its exact App ID.
-			let appID = certificate.applicationIdentifier
-			if let dot = appID.firstIndex(of: ".") {
-				options.bundleID = String(appID[appID.index(after: dot)...])
-			}
-		}
-
+		// Apps keep their own bundle ID even when the profile is for one specific App ID, as Feather does.
+		// Renaming every app to the profile's App ID made each install replace the previous app.
 		let request = SignRequest(
 			app: app,
 			certificate: options.adhoc ? nil : certificate,

@@ -33,6 +33,17 @@ struct LibraryView: View {
 
 	private var isEmpty: Bool { library.apps.isEmpty && downloads.items.isEmpty && library.imports.isEmpty }
 
+	/// .ipa/.tipa, plus whatever types iOS resolves those extensions to (often a zip or a dynamic
+	/// type), so the files are selectable even when no other app has declared them.
+	private static let ipaTypes: [UTType] = {
+		var types: [UTType] = [.ipa, .tipa]
+		for ext in ["ipa", "tipa"] {
+			if let type = UTType(filenameExtension: ext), !types.contains(type) { types.append(type) }
+		}
+		types.append(.zip)
+		return types
+	}()
+
 	var body: some View {
 		NavigationStack {
 			List {
@@ -141,17 +152,21 @@ struct LibraryView: View {
 					}
 				}
 			}
-			.fileImporter(isPresented: $showImporter, allowedContentTypes: [.ipa, .tipa], allowsMultipleSelection: true) { result in
-				switch result {
-				case .success(let urls):
+			.sheet(isPresented: $showImporter) {
+				DocumentPicker(types: Self.ipaTypes) { urls in
+					showImporter = false
 					for url in urls {
+						guard ["ipa", "tipa"].contains(url.pathExtension.lowercased()) else {
+							router.alert = "\(url.lastPathComponent) isn't an .ipa file."
+							continue
+						}
 						Task {
-							do { try await library.importIPA(at: url) } catch { router.show(error) }
+							// The picker hands over a copy, so it can go once imported.
+							do { try await library.importIPA(at: url, deleteSource: true) } catch { router.show(error) }
 						}
 					}
-				case .failure(let error):
-					router.show(error)
 				}
+				.ignoresSafeArea()
 			}
 			.alert("Import from URL", isPresented: $showURLPrompt) {
 				TextField("https://example.com/app.ipa", text: $urlText)
