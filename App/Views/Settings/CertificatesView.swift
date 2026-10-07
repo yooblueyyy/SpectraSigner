@@ -6,27 +6,36 @@ struct CertificatesView: View {
 	@EnvironmentObject private var router: AppRouter
 
 	@State private var adding: AppRouter.PendingCertificate?
+	@State private var inspecting: SigningCertificate?
 
 	var body: some View {
 		List {
 			Section {
 				ForEach(certificates.certificates) { cert in
-					HStack(spacing: 12) {
-						Button {
-							certificates.selectedID = cert.id
-						} label: {
-							Image(systemName: certificates.selected?.id == cert.id ? "checkmark.circle.fill" : "circle")
+					let isSelected = certificates.selected?.id == cert.id
+					// Tapping the row makes it the default; the ⓘ button opens details.
+					Button {
+						certificates.selectedID = cert.id
+						UISelectionFeedbackGenerator().selectionChanged()
+					} label: {
+						HStack(spacing: 12) {
+							Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
 								.font(.title3)
-								.foregroundStyle(certificates.selected?.id == cert.id ? Color.accentColor : .secondary)
-						}
-						.buttonStyle(.plain)
-
-						NavigationLink {
-							CertificateDetailView(certificate: cert)
-						} label: {
+								.foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
 							CertificateRow(certificate: cert)
+							Spacer(minLength: 0)
+							Button {
+								inspecting = cert
+							} label: {
+								Image(systemName: "info.circle")
+									.font(.title3)
+									.foregroundStyle(Color.accentColor)
+							}
+							.buttonStyle(.borderless)
 						}
+						.contentShape(Rectangle())
 					}
+					.buttonStyle(.plain)
 					.cardRow()
 				}
 				.onDelete { offsets in
@@ -56,6 +65,16 @@ struct CertificatesView: View {
 		}
 		.sheet(item: $adding) { pending in
 			AddCertificateView(p12: pending.p12, profile: pending.profile)
+		}
+		.sheet(item: $inspecting) { cert in
+			NavigationStack {
+				CertificateDetailView(certificate: cert)
+					.toolbar {
+						ToolbarItem(placement: .confirmationAction) {
+							Button("Done") { inspecting = nil }
+						}
+					}
+			}
 		}
 		.onAppear(perform: consumePending)
 		.onChange(of: router.pendingCertificate?.id) { _ in consumePending() }
@@ -154,20 +173,25 @@ struct AddCertificateView: View {
 					}
 				}
 			}
-			.fileImporter(
-				isPresented: $showPicker,
-				allowedContentTypes: [.pkcs12, .mobileProvision],
-				allowsMultipleSelection: true
-			) { result in
-				switch result {
-				case .success(let urls):
+			.sheet(isPresented: $showPicker) {
+				DocumentPicker(types: Self.certificateTypes) { urls in
+					showPicker = false
 					receive(urls)
-				case .failure(let failure):
-					error = failure.localizedDescription
 				}
+				.ignoresSafeArea()
 			}
 		}
 	}
+
+	/// .p12/.pfx and .mobileprovision, including whatever type iOS resolves those extensions to,
+	/// so they're selectable even when no other app has declared them.
+	private static let certificateTypes: [UTType] = {
+		var types: [UTType] = [.pkcs12, .mobileProvision]
+		for ext in ["p12", "pfx", "mobileprovision"] {
+			if let type = UTType(filenameExtension: ext), !types.contains(type) { types.append(type) }
+		}
+		return types
+	}()
 
 	private func pick(_ target: PickTarget) {
 		pickTarget = target
