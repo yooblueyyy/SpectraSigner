@@ -76,6 +76,7 @@ final class InstallManager: ObservableObject {
 			case .success:
 				self.state = .waitingForPrompt
 				self.note("Server ready at \(server.host):\(server.port)")
+				self.note("Certificates: \(server.chainSummary)")
 				Task { @MainActor in
 					await self.selfTest(server.manifestURL)
 					self.openInstallLink(server.installURL)
@@ -100,13 +101,18 @@ final class InstallManager: ObservableObject {
 	private func selfTest(_ url: URL) async {
 		var request = URLRequest(url: url)
 		request.timeoutInterval = 8
+		let delegate = TrustLogger { [weak self] line in
+			Task { @MainActor in self?.note(line) }
+		}
 		do {
-			let (data, response) = try await URLSession.shared.data(for: request)
+			let (data, response) = try await URLSession.shared.data(for: request, delegate: delegate)
 			let status = (response as? HTTPURLResponse)?.statusCode ?? 0
 			note("Self-test: HTTP \(status), \(data.count) bytes")
 		} catch {
 			let nsError = error as NSError
-			note("Self-test failed: \(nsError.localizedDescription) (\(nsError.domain) \(nsError.code))")
+			var detail = "\(nsError.domain) \(nsError.code)"
+			if let stream = nsError.userInfo["_kCFStreamErrorCodeKey"] { detail += ", stream \(stream)" }
+			note("Self-test failed: \(nsError.localizedDescription) (\(detail))")
 		}
 	}
 
@@ -149,6 +155,36 @@ final class InstallManager: ObservableObject {
 		server?.stop()
 		server = nil
 		KeepAlive.shared.end()
+	}
+}
+
+/// Logs the certificates the install server presented and whether iOS trusts them.
+private final class TrustLogger: NSObject, URLSessionTaskDelegate {
+	private let log: (String) -> Void
+
+	init(log: @escaping (String) -> Void) {
+		self.log = log
+	}
+
+	func urlSession(
+		_ session: URLSession,
+		task: URLSessionTask,
+		didReceive challenge: URLAuthenticationChallenge,
+		completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+	) {
+		guard let trust = challenge.protectionSpace.serverTrust else {
+			return completionHandler(.performDefaultHandling, nil)
+		}
+		let presented = (SecTrustCopyCertificateChain(trust) as? [SecCertificate] ?? [])
+			.map { SecCertificateCopySubjectSummary($0) as String? ?? "?" }
+		log("Server sent \(presented.count): \(presented.joined(separator: " → "))")
+		var error: CFError?
+		if SecTrustEvaluateWithError(trust, &error) {
+			log("iOS trusts the certificate")
+		} else {
+			log("iOS rejects the certificate: \((error as Error?)?.localizedDescription ?? "unknown")")
+		}
+		completionHandler(.performDefaultHandling, nil)
 	}
 }
 

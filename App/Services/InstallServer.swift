@@ -91,13 +91,28 @@ final class InstallServer {
 			host = name.hasPrefix("*.") ? "local" + name.dropFirst(1) : name
 		}
 		let identity = identityRef as! SecIdentity
-		var chain = first[kSecImportItemCertChain as String] as? [SecCertificate] ?? []
-		if chain.isEmpty {
-			var leaf: SecCertificate?
-			SecIdentityCopyCertificate(identity, &leaf)
-			chain = leaf.map { [$0] } ?? []
+		var leaf: SecCertificate?
+		SecIdentityCopyCertificate(identity, &leaf)
+		guard let leaf else { throw Failure.badCertificate }
+
+		// The intermediates are bundled as chain1.der, chain2.der, … (scripts/fetch-server-cert.sh).
+		// They're loaded explicitly: the chain SecPKCS12Import builds can leave out the
+		// cross-signed root that iOS needs, and then every TLS handshake fails.
+		var chain = [leaf]
+		for index in 1... {
+			guard
+				let url = Bundle.main.url(forResource: "chain\(index)", withExtension: "der"),
+				let der = try? Data(contentsOf: url),
+				let certificate = SecCertificateCreateWithData(nil, der as CFData)
+			else { break }
+			chain.append(certificate)
 		}
 		return (identity, chain, host)
+	}
+
+	/// The certificates the server presents, for the install log.
+	var chainSummary: String {
+		chain.map { SecCertificateCopySubjectSummary($0) as String? ?? "?" }.joined(separator: " → ")
 	}
 
 	func start(ready: @escaping (Result<Void, Error>) -> Void) {

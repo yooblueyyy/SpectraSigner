@@ -23,6 +23,7 @@ jq -r '.info.domains.commonName' "$tmp/pack.json" > Resources/commonName.txt
 # downloads the manifest, so without them the install prompt never appears. Follow the
 # issuer links (including cross-signs, e.g. Root YR -> ISRG Root X1) and bundle them too.
 : > "$tmp/chain.pem"
+rm -f Resources/chain*.der
 cert="$tmp/server.crt"
 i=0
 while [ $i -lt 4 ]; do
@@ -36,6 +37,8 @@ while [ $i -lt 4 ]; do
 	[ "$(openssl x509 -in "$tmp/issuer$i.pem" -noout -subject | sed 's/^subject=//')" != \
 		"$(openssl x509 -in "$tmp/issuer$i.pem" -noout -issuer | sed 's/^issuer=//')" ] || break
 	cat "$tmp/issuer$i.pem" >> "$tmp/chain.pem"
+	# Also bundled on their own: the app sends these with the leaf during the TLS handshake.
+	openssl x509 -in "$tmp/issuer$i.pem" -outform DER -out "Resources/chain$i.der"
 	cert="$tmp/issuer$i.pem"
 done
 [ $i -gt 0 ] || { echo "Couldn't find the server certificate's issuer" >&2; exit 1; }
