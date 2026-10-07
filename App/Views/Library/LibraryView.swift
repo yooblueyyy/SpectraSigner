@@ -10,6 +10,7 @@ struct LibraryView: View {
 	@EnvironmentObject private var library: LibraryStore
 	@EnvironmentObject private var downloads: DownloadManager
 	@EnvironmentObject private var installer: InstallManager
+	@EnvironmentObject private var certificates: CertificateStore
 	@EnvironmentObject private var router: AppRouter
 
 	@State private var filter: Filter = .all
@@ -30,16 +31,24 @@ struct LibraryView: View {
 		}
 	}
 
+	private var isEmpty: Bool { library.apps.isEmpty && downloads.items.isEmpty && library.imports.isEmpty }
+
 	var body: some View {
 		NavigationStack {
 			List {
 				Section {
-					Picker("Filter", selection: $filter) {
-						ForEach(Filter.allCases) { Text($0.rawValue).tag($0) }
+					VStack(spacing: 14) {
+						HStack(spacing: 10) {
+							StatTile(value: "\(library.unsigned.count)", label: "Unsigned", systemImage: "shippingbox.fill", tint: Spectra.colors[1])
+							StatTile(value: "\(library.signed.count)", label: "Signed", systemImage: "checkmark.seal.fill", tint: Spectra.colors[3])
+							certificateTile
+						}
+						if !library.apps.isEmpty {
+							ChipBar(options: Filter.allCases, selection: $filter) { $0.rawValue }
+						}
 					}
-					.pickerStyle(.segmented)
 					.listRowBackground(Color.clear)
-					.listRowInsets(EdgeInsets())
+					.listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
 				}
 
 				if !downloads.items.isEmpty || !library.imports.isEmpty {
@@ -52,45 +61,68 @@ struct LibraryView: View {
 									: "Downloading…",
 								progress: item.progress
 							)
+							.cardRow()
 							.swipeActions {
 								Button("Cancel", role: .destructive) { downloads.cancel(item) }
 							}
 						}
 						ForEach(library.imports) { job in
-							ImportRow(job: job)
+							ImportRow(job: job).cardRow()
 						}
 					}
 				}
 
-				Section {
-					ForEach(visible) { app in
-						NavigationLink(value: app) {
-							LibraryRow(app: app)
-						}
-						.swipeActions(edge: .trailing) {
-							Button("Delete", role: .destructive) { deleting = app }
-						}
-						.swipeActions(edge: .leading) {
-							if app.kind == .signed {
-								Button("Install") { installer.install(app) }.tint(.accentColor)
-							} else {
-								Button("Sign") { signing = app }.tint(.accentColor)
+				if isEmpty {
+					Section {
+						VStack(spacing: 16) {
+							ZStack {
+								Circle().fill(Spectra.angular).frame(width: 84, height: 84).blur(radius: 18).opacity(0.6)
+								Image(systemName: "square.and.arrow.down.on.square.fill")
+									.font(.system(size: 34, weight: .semibold))
+									.foregroundStyle(.white)
+									.frame(width: 76, height: 76)
+									.background(Color.accentColor.gradient, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
 							}
+							Text("Your library is empty").font(.title3.weight(.bold))
+							Text("Import an .ipa, or grab an app from Discover. Apps you sign show up here ready to install.")
+								.font(.subheadline)
+								.foregroundStyle(.secondary)
+								.multilineTextAlignment(.center)
+							Button("Import an IPA") { showImporter = true }
+								.buttonStyle(SpectraButtonStyle())
+							Button("Browse Discover") { router.tab = .discover }
+								.font(.subheadline.weight(.semibold))
 						}
-						.contextMenu { menu(for: app) }
+						.frame(maxWidth: .infinity)
+						.glassCard(padding: 24)
+						.listRowBackground(Color.clear)
+						.listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
+					}
+				} else {
+					Section {
+						ForEach(visible) { app in
+							NavigationLink(value: app) {
+								LibraryRow(app: app)
+							}
+							.cardRow()
+							.swipeActions(edge: .trailing) {
+								Button("Delete", role: .destructive) { deleting = app }
+							}
+							.swipeActions(edge: .leading) {
+								if app.kind == .signed {
+									Button("Install") { installer.install(app) }.tint(.accentColor)
+								} else {
+									Button("Sign") { signing = app }.tint(.accentColor)
+								}
+							}
+							.contextMenu { menu(for: app) }
+						}
 					}
 				}
 			}
-			.overlay {
-				if library.apps.isEmpty && downloads.items.isEmpty && library.imports.isEmpty {
-					EmptyStateView(
-						title: "No Apps",
-						systemImage: "square.stack.3d.up.slash",
-						message: "Import an .ipa with the + button, or get one from a source."
-					)
-				}
-			}
-			.searchable(text: $search, prompt: "Search apps")
+			.listStyle(.insetGrouped)
+			.spectraBackground()
+			.searchable(text: $search, prompt: "Search your apps")
 			.navigationTitle("Library")
 			.navigationDestination(for: LibraryApp.self) { app in
 				AppDetailView(appID: app.id)
@@ -105,7 +137,7 @@ struct LibraryView: View {
 							Label("Import from URL", systemImage: "link")
 						}
 					} label: {
-						Image(systemName: "plus")
+						Image(systemName: "plus.circle.fill").font(.title3)
 					}
 				}
 			}
@@ -154,6 +186,25 @@ struct LibraryView: View {
 		}
 	}
 
+	private var certificateTile: some View {
+		Group {
+			if let cert = certificates.selected {
+				let days = Int(cert.expiration.timeIntervalSinceNow / 86_400)
+				StatTile(
+					value: days < 0 ? "Expired" : "\(days)d",
+					label: "Certificate",
+					systemImage: "key.fill",
+					tint: cert.expiration.expiryColor
+				)
+			} else {
+				Button { router.tab = .settings } label: {
+					StatTile(value: "Add", label: "Certificate", systemImage: "key.fill", tint: Spectra.colors[0])
+				}
+				.buttonStyle(.plain)
+			}
+		}
+	}
+
 	@ViewBuilder
 	private func menu(for app: LibraryApp) -> some View {
 		if app.kind == .signed {
@@ -176,8 +227,8 @@ struct LibraryRow: View {
 
 	var body: some View {
 		HStack(spacing: 14) {
-			AppIconView(url: app.iconURL, size: 52)
-			VStack(alignment: .leading, spacing: 3) {
+			AppIconView(url: app.iconURL, size: 56)
+			VStack(alignment: .leading, spacing: 4) {
 				Text(app.name)
 					.font(.body.weight(.semibold))
 					.lineLimit(1)
@@ -194,7 +245,7 @@ struct LibraryRow: View {
 								.foregroundStyle(expiry.expiryColor)
 						}
 					} else {
-						Pill(text: "Unsigned", color: .secondary)
+						Pill(text: "Unsigned", color: .orange)
 						Text(app.size.formattedBytes)
 							.font(.caption2)
 							.foregroundStyle(.secondary)
@@ -202,7 +253,6 @@ struct LibraryRow: View {
 				}
 			}
 		}
-		.padding(.vertical, 2)
 	}
 }
 
@@ -212,19 +262,18 @@ struct ProgressRow: View {
 	var progress: Double?
 
 	var body: some View {
-		VStack(alignment: .leading, spacing: 6) {
-			HStack {
-				Text(title).font(.subheadline.weight(.medium)).lineLimit(1)
-				Spacer()
+		HStack(spacing: 14) {
+			SpectraRing(progress: progress, size: 40, lineWidth: 4) {
+				if let progress {
+					Text("\(Int(progress * 100))").font(.caption2.weight(.bold).monospacedDigit())
+				}
+			}
+			VStack(alignment: .leading, spacing: 3) {
+				Text(title).font(.subheadline.weight(.semibold)).lineLimit(1)
 				Text(detail).font(.caption).foregroundStyle(.secondary)
 			}
-			if let progress {
-				ProgressView(value: progress)
-			} else {
-				ProgressView().frame(maxWidth: .infinity, alignment: .leading)
-			}
+			Spacer()
 		}
-		.padding(.vertical, 4)
 	}
 }
 

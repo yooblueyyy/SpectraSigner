@@ -79,9 +79,13 @@ struct RootView: View {
 	@EnvironmentObject private var router: AppRouter
 	@EnvironmentObject private var installer: InstallManager
 	@EnvironmentObject private var downloads: DownloadManager
+	@EnvironmentObject private var sources: SourceStore
 
 	var body: some View {
 		TabView(selection: $router.tab) {
+			DiscoverView()
+				.tabItem { Label("Discover", systemImage: "sparkles") }
+				.tag(AppRouter.Tab.discover)
 			SourcesView()
 				.tabItem { Label("Sources", systemImage: "globe") }
 				.tag(AppRouter.Tab.sources)
@@ -94,7 +98,7 @@ struct RootView: View {
 		}
 		.sheet(isPresented: $installer.isPresented, onDismiss: { installer.dismiss() }) {
 			InstallSheet()
-				.presentationDetents([.height(340)])
+				.presentationDetents([.medium])
 		}
 		.alert("Something went wrong", isPresented: Binding(
 			get: { router.alert != nil },
@@ -104,6 +108,7 @@ struct RootView: View {
 		} message: {
 			Text(router.alert ?? "")
 		}
+		.task { await sources.refreshIfStale() }
 		.onChange(of: downloads.lastError) { error in
 			if let error {
 				router.alert = error

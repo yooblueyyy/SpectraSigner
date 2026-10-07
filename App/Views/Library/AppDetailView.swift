@@ -21,63 +21,86 @@ struct AppDetailView: View {
 	private func content(_ app: LibraryApp) -> some View {
 		let origin = library.app(app.originID)
 
-		return List {
-			Section {
+		return ScrollView {
+			VStack(spacing: 20) {
+				// Hero
 				VStack(spacing: 12) {
-					AppIconView(url: app.iconURL, size: 96)
+					ZStack {
+						AppIconView(url: app.iconURL, size: 150)
+							.blur(radius: 40)
+							.opacity(0.6)
+						AppIconView(url: app.iconURL, size: 112)
+							.shadow(color: .black.opacity(0.2), radius: 14, y: 6)
+					}
 					Text(app.name).font(.title2.weight(.bold)).multilineTextAlignment(.center)
 					Text(app.bundleID).font(.footnote).foregroundStyle(.secondary).textSelection(.enabled)
-					Pill(text: app.kind == .signed ? "Signed" : "Unsigned", color: app.kind == .signed ? .green : .secondary)
+					Pill(text: app.kind == .signed ? "Signed" : "Unsigned", color: app.kind == .signed ? .green : .orange)
 				}
-				.frame(maxWidth: .infinity)
-				.padding(.vertical, 8)
-				.listRowBackground(Color.clear)
-			}
+				.padding(.top, 12)
 
-			Section {
-				if app.kind == .signed {
-					Button { installer.install(app) } label: {
-						Label("Install", systemImage: "arrow.down.app.fill")
+				// Actions
+				VStack(spacing: 10) {
+					if app.kind == .signed {
+						Button { installer.install(app) } label: {
+							Label("Install", systemImage: "arrow.down.app.fill")
+						}
+						.buttonStyle(SpectraButtonStyle())
+						HStack(spacing: 10) {
+							ShareLink(item: app.ipaURL, preview: SharePreview(app.shareFileName)) {
+								Label("Share", systemImage: "square.and.arrow.up").frame(maxWidth: .infinity)
+							}
+							if let origin {
+								Button { signing = origin } label: {
+									Label("Sign Again", systemImage: "signature").frame(maxWidth: .infinity)
+								}
+							}
+						}
+						.buttonStyle(.bordered)
+						.buttonBorderShape(.capsule)
+						.controlSize(.large)
+					} else {
+						Button { signing = app } label: {
+							Label("Sign", systemImage: "signature")
+						}
+						.buttonStyle(SpectraButtonStyle())
 					}
-					ShareLink(item: app.ipaURL, preview: SharePreview(app.shareFileName)) {
-						Label("Share IPA", systemImage: "square.and.arrow.up")
+				}
+				.padding(.horizontal, 16)
+
+				// Info
+				VStack(spacing: 0) {
+					infoRow("Version", app.version)
+					if let minOS = app.minimumOS {
+						divider
+						infoRow("Minimum iOS", minOS)
 					}
-					if let origin {
-						Button { signing = origin } label: {
-							Label("Sign Again", systemImage: "signature")
+					divider
+					infoRow("Size", app.size.formattedBytes)
+					divider
+					infoRow(app.kind == .signed ? "Signed" : "Imported", app.date.formatted(date: .abbreviated, time: .shortened))
+					if app.kind == .signed {
+						divider
+						infoRow("Certificate", app.certificateName ?? "Unknown")
+						if let expiry = app.certificateExpiry {
+							divider
+							HStack {
+								Text("Expiry").foregroundStyle(.secondary)
+								Spacer()
+								Text(expiry.expiryDescription).foregroundStyle(expiry.expiryColor)
+							}
+							.font(.subheadline)
 						}
 					}
-				} else {
-					Button { signing = app } label: {
-						Label("Sign", systemImage: "signature")
-					}
 				}
-			}
+				.glassCard()
+				.padding(.horizontal, 16)
 
-			Section("Information") {
-				LabeledContent("Version", value: app.version)
-				LabeledContent("Bundle ID", value: app.bundleID)
-				if let minOS = app.minimumOS { LabeledContent("Minimum iOS", value: minOS) }
-				LabeledContent("Size", value: app.size.formattedBytes)
-				LabeledContent(app.kind == .signed ? "Signed" : "Imported", value: app.date.formatted(date: .abbreviated, time: .shortened))
-			}
-
-			if app.kind == .signed {
-				Section("Certificate") {
-					LabeledContent("Signed With", value: app.certificateName ?? "Unknown")
-					if let expiry = app.certificateExpiry {
-						LabeledContent("Expiry") {
-							Text(expiry.expiryDescription).foregroundStyle(expiry.expiryColor)
-						}
-					}
-				}
-			}
-
-			Section {
 				Button("Delete App", role: .destructive) { confirmDelete = true }
+					.font(.subheadline.weight(.semibold))
+					.padding(.bottom, 24)
 			}
 		}
-		.navigationTitle(app.name)
+		.background(AuroraBackground())
 		.navigationBarTitleDisplayMode(.inline)
 		.sheet(item: $signing) { SignView(app: $0) }
 		.confirmationDialog("Delete \(app.name)?", isPresented: $confirmDelete, titleVisibility: .visible) {
@@ -86,5 +109,16 @@ struct AppDetailView: View {
 				dismiss()
 			}
 		}
+	}
+
+	private var divider: some View { Divider().padding(.vertical, 9) }
+
+	private func infoRow(_ title: String, _ value: String) -> some View {
+		HStack {
+			Text(title).foregroundStyle(.secondary)
+			Spacer()
+			Text(value).multilineTextAlignment(.trailing).lineLimit(2)
+		}
+		.font(.subheadline)
 	}
 }

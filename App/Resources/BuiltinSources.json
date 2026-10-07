@@ -1,0 +1,647 @@
+[
+ {
+  "name": "AltStore",
+  "url": "https://apps.altstore.io",
+  "category": "Official"
+ },
+ {
+  "name": "SideStore Official",
+  "url": "https://raw.githubusercontent.com/SideStore/apps.json/HEAD/_includes/source.json",
+  "category": "Official"
+ },
+ {
+  "name": "SideStore Team Picks",
+  "url": "https://community-apps.sidestore.io/sidecommunity.json",
+  "category": "Official"
+ },
+ {
+  "name": "SideLink Official",
+  "url": "https://raw.githubusercontent.com/gabrielvuksani/sidelink/HEAD/docs/source.json",
+  "category": "Official"
+ },
+ {
+  "name": "Resonance Team",
+  "url": "https://raw.githubusercontent.com/TheResonanceTeam/.default-sources/HEAD/ResonanceTeamRepo.json",
+  "category": "Official"
+ },
+ {
+  "name": "LiveContainer+SideStore",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/LiveContainer+SideStore/apps.json",
+  "category": "Official"
+ },
+ {
+  "name": "Se2crid's Source",
+  "url": "https://raw.githubusercontent.com/se2crid/adp/HEAD/app-repo.json",
+  "category": "Official"
+ },
+ {
+  "name": "R3ALCYB3R's Apps",
+  "url": "https://raw.githubusercontent.com/R3ALCYB3R/Lightning-Struck/HEAD/apps.json",
+  "category": "Official"
+ },
+ {
+  "name": "Ignited Source",
+  "url": "https://altstore.ignitedemulator.com",
+  "category": "Emulators"
+ },
+ {
+  "name": "OatmealDome's AltStore Source",
+  "url": "https://altstore.oatmealdome.me",
+  "category": "Emulators"
+ },
+ {
+  "name": "Provenance Emulator",
+  "url": "https://provenance-emu.com/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Flyinghead",
+  "url": "https://flyinghead.github.io/flycast-builds/altstore.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "crystall1ne.dev",
+  "url": "https://alt.crystall1ne.dev",
+  "category": "Emulators"
+ },
+ {
+  "name": "ARMSX2",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/ARMSX2/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "ManicEMU",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/ManicEMU/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "NeoStation iOS",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/NeoStation/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "PSX3IOS",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/PSX3IOS/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Madeira",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Madeira/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Playport",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Playport/apps.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Cascade",
+  "url": "https://raw.githubusercontent.com/Leviidev/Cascade/HEAD/source.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "DukeX",
+  "url": "https://raw.githubusercontent.com/MaftyManicEMU/DukeX/HEAD/altsource/source.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "AYS2",
+  "url": "https://raw.githubusercontent.com/st4rwhx/AYS2/HEAD/source.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Pocket8",
+  "url": "https://raw.githubusercontent.com/jevonlipsey/pico-ios/HEAD/altstore.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Empo",
+  "url": "https://raw.githubusercontent.com/mateo-m/empo-app/HEAD/altstore-source.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Applesauce",
+  "url": "https://raw.githubusercontent.com/0xjohnnydev/Applesauce/HEAD/distribution/altstore-source.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "RSDKv5U Decompilation",
+  "url": "https://raw.githubusercontent.com/DemonDezerin/AltStore-Repo/HEAD/AltStore.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "VCMI",
+  "url": "https://raw.githubusercontent.com/vcmi/vcmi-updates/HEAD/altstore/altstore.json",
+  "category": "Emulators"
+ },
+ {
+  "name": "Epic Games, Inc.",
+  "url": "https://content-download-egs.distro.on.epicgames.com/iOS/altstore/source.json",
+  "category": "Games"
+ },
+ {
+  "name": "PokeMMO",
+  "url": "https://pokemmo.com/altstore/",
+  "category": "Games"
+ },
+ {
+  "name": "stux",
+  "url": "https://alt.stux.me/repo.json",
+  "category": "Games"
+ },
+ {
+  "name": "ULTRAHORSE Market",
+  "url": "https://cdn.squadblast.com/market/marketplace.json",
+  "category": "Games"
+ },
+ {
+  "name": "Party Knights - Drinking Game",
+  "url": "https://partyknights.app/source",
+  "category": "Games"
+ },
+ {
+  "name": "CARDMATE",
+  "url": "https://weztling.se/altstore.json",
+  "category": "Games"
+ },
+ {
+  "name": "The OldOS Project",
+  "url": "https://raw.githubusercontent.com/zzanehip/The-OldOS-Project/HEAD/source.json",
+  "category": "Games"
+ },
+ {
+  "name": "UTM Repository",
+  "url": "https://alt.getutm.app",
+  "category": "Developer"
+ },
+ {
+  "name": "Orchard",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Orchard/apps.json",
+  "category": "Developer"
+ },
+ {
+  "name": "Husk",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Husk/apps.json",
+  "category": "Developer"
+ },
+ {
+  "name": "iSH",
+  "url": "https://ish.app/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "gterm",
+  "url": "https://raw.githubusercontent.com/madeye/gterm/HEAD/docs/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "term.it",
+  "url": "https://raw.githubusercontent.com/telenc/term.it/HEAD/docs/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "nnsnodnb Apps Source",
+  "url": "https://as.nnsnodnb.moe/source.pal.json",
+  "category": "Developer"
+ },
+ {
+  "name": "OpenParsec",
+  "url": "https://raw.githubusercontent.com/hugeBlack/OpenParsec/HEAD/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "Backburner",
+  "url": "https://raw.githubusercontent.com/StayLameBro/backburner/HEAD/altstore/source.json",
+  "category": "Developer"
+ },
+ {
+  "name": "r2Vault Source",
+  "url": "https://raw.githubusercontent.com/xaif/r2Vault/HEAD/altstore-source.json",
+  "category": "Developer"
+ },
+ {
+  "name": "InputPilot",
+  "url": "https://raw.githubusercontent.com/thorethy1/InputPilot/HEAD/app-repo.json",
+  "category": "Developer"
+ },
+ {
+  "name": "rdzSonde",
+  "url": "https://raw.githubusercontent.com/rdzsonde/rdzwx-go/HEAD/altstore-source.json",
+  "category": "Developer"
+ },
+ {
+  "name": "Reticulum Mobile App",
+  "url": "https://raw.githubusercontent.com/thatSFguy/reticulum-mobile-app/HEAD/docs/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "Lex software soulutions",
+  "url": "https://raw.githubusercontent.com/EinEinfach/CaSSAndRA_native/HEAD/builds/iOS/AltStore/altstore.json",
+  "category": "Developer"
+ },
+ {
+  "name": "Taurine",
+  "url": "https://taurine.app/altstore/taurinestore.json",
+  "category": "Customization"
+ },
+ {
+  "name": "Odyssey",
+  "url": "https://theodyssey.dev/altstore/odysseysource.json",
+  "category": "Customization"
+ },
+ {
+  "name": "lara",
+  "url": "https://raw.githubusercontent.com/rooootdev/lara/HEAD/source.json",
+  "category": "Customization"
+ },
+ {
+  "name": "AirCard-iOS",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/AirCard/apps.json",
+  "category": "Customization"
+ },
+ {
+  "name": "MiniWatts",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/MiniWatts/apps.json",
+  "category": "Customization"
+ },
+ {
+  "name": "Pocket Poster",
+  "url": "https://raw.githubusercontent.com/SerStars/Nugget-Wallpapers/HEAD/other/pocketposter_source.json",
+  "category": "Customization"
+ },
+ {
+  "name": "iTorrent Source",
+  "url": "https://xitrix.github.io/iTorrent/AltStore.json",
+  "category": "Media"
+ },
+ {
+  "name": "Spicy Sparks",
+  "url": "https://esound.app/downloads/source.json",
+  "category": "Media"
+ },
+ {
+  "name": "Michael-128",
+  "url": "https://raw.githubusercontent.com/Michael-128/qBitControl-releases/main/source.json",
+  "category": "Media"
+ },
+ {
+  "name": "BlueMatter",
+  "url": "https://raw.githubusercontent.com/RajnishOne/qbitconnect-releases/main/altstore-pal.json",
+  "category": "Media"
+ },
+ {
+  "name": "BitClient",
+  "url": "https://raw.githubusercontent.com/AlanLang/BitClient/HEAD/AltStore.json",
+  "category": "Media"
+ },
+ {
+  "name": "JSTorrent",
+  "url": "https://raw.githubusercontent.com/kzahel/JSTorrent/HEAD/website/public/altstore-source.json",
+  "category": "Media"
+ },
+ {
+  "name": "Apps by Sab44",
+  "url": "https://raw.githubusercontent.com/Sab44/omni-for-pyload/HEAD/ios/AltStoreSource.json",
+  "category": "Media"
+ },
+ {
+  "name": "DonutWare Repository",
+  "url": "https://raw.githubusercontent.com/DonutWare/Fladder/HEAD/altstore.json",
+  "category": "Media"
+ },
+ {
+  "name": "Musly",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Musly/apps.json",
+  "category": "Media"
+ },
+ {
+  "name": "Lo'ak Repository",
+  "url": "https://raw.githubusercontent.com/depau/loak/HEAD/app-repo.json",
+  "category": "Media"
+ },
+ {
+  "name": "Resonus",
+  "url": "https://raw.githubusercontent.com/juananzzz/resonus/HEAD/Source.json",
+  "category": "Media"
+ },
+ {
+  "name": "OpenAamps Official Source",
+  "url": "https://raw.githubusercontent.com/SharadS28N/pi-aamps-and-openaamps/HEAD/docs/altstore.json",
+  "category": "Media"
+ },
+ {
+  "name": "Navic Repository",
+  "url": "https://raw.githubusercontent.com/JanBencek/svirka-android/HEAD/app-repo.json",
+  "category": "Media"
+ },
+ {
+  "name": "Exate's Fusion Cave",
+  "url": "https://raw.githubusercontent.com/yodaluca23/Fusion-AltStore/HEAD/source.json",
+  "category": "Media"
+ },
+ {
+  "name": "AncientFalcon88's Source",
+  "url": "https://raw.githubusercontent.com/AncientFalcon88/Argus/HEAD/altstore-source.json",
+  "category": "Media"
+ },
+ {
+  "name": "Rádio Animu",
+  "url": "https://raw.githubusercontent.com/RadioAnimu/animu-mobile-app/HEAD/altstore/source.json",
+  "category": "Media"
+ },
+ {
+  "name": "SideStep Apps",
+  "url": "https://raw.githubusercontent.com/johnbuckman/SideStep/HEAD/sidestep-apps.json",
+  "category": "Media"
+ },
+ {
+  "name": "Roam Control",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Roam-Control/apps.json",
+  "category": "Media"
+ },
+ {
+  "name": "Aidoku Source",
+  "url": "https://raw.githubusercontent.com/Aidoku/Aidoku/altstore/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Mangayomi",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Mangayomi/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Tsumiru",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Suwayomi-Tsumiru/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Novella",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Novella/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Mangareader",
+  "url": "https://raw.githubusercontent.com/Duy-Thanh/MangaDexReader/HEAD/AltStore/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "OpenAni",
+  "url": "https://raw.githubusercontent.com/maxchang3/ani-altstore-source/HEAD/generated/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Shirox",
+  "url": "https://raw.githubusercontent.com/xibrox/Shirox/HEAD/apps.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Chronos App Repo",
+  "url": "https://raw.githubusercontent.com/castdrian/Chronos/HEAD/app-repo.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Shelfy Source",
+  "url": "https://raw.githubusercontent.com/pascalmaxime/Shelfy/HEAD/altstore.json",
+  "category": "Reading"
+ },
+ {
+  "name": "Inkwell",
+  "url": "https://raw.githubusercontent.com/ewanc26/inkwell/HEAD/iOS/altstore/source.json",
+  "category": "Reading"
+ },
+ {
+  "name": "lo.cafe Repository",
+  "url": "https://raw.githubusercontent.com/lo-cafe/winston-altstore/HEAD/apps.json",
+  "category": "Social"
+ },
+ {
+  "name": "iPhanpy",
+  "url": "https://raw.githubusercontent.com/matfantinel/iphanpy/refs/heads/main/altstore/source.json",
+  "category": "Social"
+ },
+ {
+  "name": "HackerWeb",
+  "url": "https://alt.hackerwebapp.com/PALSource.json",
+  "category": "Social"
+ },
+ {
+  "name": "Pixiv-SwiftUI",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Pixiv-SwiftUI/apps.json",
+  "category": "Social"
+ },
+ {
+  "name": "Doer",
+  "url": "https://raw.githubusercontent.com/bebound/AltGallery/HEAD/apps/Doer/apps.json",
+  "category": "Social"
+ },
+ {
+  "name": "CookieJar",
+  "url": "https://raw.githubusercontent.com/kakenhidesu/CookieJar/HEAD/altstore.json",
+  "category": "Social"
+ },
+ {
+  "name": "ElectricS01's Source",
+  "url": "https://raw.githubusercontent.com/ElectricS01/Altstore-Source/HEAD/source.json",
+  "category": "Social"
+ },
+ {
+  "name": "Laoalts",
+  "url": "https://alts.lao.sb",
+  "category": "Social"
+ },
+ {
+  "name": "TfourJ's Apps",
+  "url": "https://altstore.getnickel.site",
+  "category": "Social"
+ },
+ {
+  "name": "Cizzuk Source",
+  "url": "https://i.cizzuk.net/altstore/source.pal.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "The App Fair Project",
+  "url": "https://appfair.net/altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "SalupovTeam",
+  "url": "https://adp.salupovteam.com/altrepo.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "addy.io",
+  "url": "https://raw.githubusercontent.com/anonaddy/addy-ios/HEAD/altsource/altsource.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Photo Cleaner",
+  "url": "https://raw.githubusercontent.com/azu/photo-cleaner/HEAD/altstore/apps.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Photos Backup",
+  "url": "https://raw.githubusercontent.com/g8row/PhotosBackup/HEAD/docs/apps.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "TrustyNotes",
+  "url": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/HEAD/ios/altstore-source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Dan's Source",
+  "url": "https://raw.githubusercontent.com/ddvniele/altsource/HEAD/altsource.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Giray Coskun's Source",
+  "url": "https://raw.githubusercontent.com/giraycoskun/Tally/HEAD/Altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Untis+",
+  "url": "https://raw.githubusercontent.com/ninocss/UntisPlus/HEAD/altstore/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "HWM",
+  "url": "https://raw.githubusercontent.com/RandomModderJDK/HWM/HEAD/web/altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "StuWang's Source",
+  "url": "https://raw.githubusercontent.com/RayanceKing/CCZUHelper/HEAD/altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Aile Uygulamaları",
+  "url": "https://raw.githubusercontent.com/datcal/sideload/HEAD/apps.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "y-aplus iOS Apps",
+  "url": "https://raw.githubusercontent.com/y-aplus/ios-app-dist/HEAD/altsource.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "taisan11 Source",
+  "url": "https://raw.githubusercontent.com/taisan11/apps-repo/HEAD/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "AirDash",
+  "url": "https://raw.githubusercontent.com/zlimteck/AirDash/HEAD/altstore-source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Schei",
+  "url": "https://raw.githubusercontent.com/filippobenozzi/soldo-app/HEAD/altstore/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Blue Elephants Family",
+  "url": "https://raw.githubusercontent.com/dhishan/family-expense-tracker/HEAD/frontend/public/altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Mae's Apps",
+  "url": "https://raw.githubusercontent.com/cute-catgirl/Loft/HEAD/altstore/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "nemut.ai",
+  "url": "https://raw.githubusercontent.com/satomasahiro2005/EffectDeck/HEAD/docs/altstore/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "João Afonso",
+  "url": "https://raw.githubusercontent.com/joaoafonso2004/Portfolio/HEAD/public/ota/altstore.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Foxxoccino & Hoojao's Source",
+  "url": "https://foxxoccino.github.io/PALSource.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Charon Source",
+  "url": "https://courtpredict-ios.web.app/PALSource.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Merlin Baer (Metal)",
+  "url": "https://app.bmverse.bruu.eu",
+  "category": "Utilities"
+ },
+ {
+  "name": "Toshiaki Shirakura",
+  "url": "https://polymorph-distribution.netlify.app/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "Volksverpetzer",
+  "url": "https://vvpapps.b-cdn.net/source.json",
+  "category": "Utilities"
+ },
+ {
+  "name": "NOOP",
+  "url": "https://raw.githubusercontent.com/ParthJadhav/noop/HEAD/altstore-source.json",
+  "category": "Health"
+ },
+ {
+  "name": "FB Heart Rate Monitor",
+  "url": "https://raw.githubusercontent.com/randalln/fitbit-heart-rate-service/HEAD/altstore.json",
+  "category": "Health"
+ },
+ {
+  "name": "Mona",
+  "url": "https://raw.githubusercontent.com/mona-hrt/mona/HEAD/ios_source.json",
+  "category": "Health"
+ },
+ {
+  "name": "Portio",
+  "url": "https://raw.githubusercontent.com/baculinivan-web/Portio/HEAD/altstore-source.json",
+  "category": "Health"
+ },
+ {
+  "name": "Jabberwocky's Apps",
+  "url": "https://raw.githubusercontent.com/Jabberwocky7777/Pokedex-Tracker/HEAD/apps.json",
+  "category": "Health"
+ },
+ {
+  "name": "Autodarts Tools Source",
+  "url": "https://raw.githubusercontent.com/creazy231/tools-for-autodarts/HEAD/Autodarts_Tools_Source.json",
+  "category": "Health"
+ },
+ {
+  "name": "Off Grid",
+  "url": "https://raw.githubusercontent.com/off-grid-ai/OGAM/HEAD/altstore-source.json",
+  "category": "AI"
+ },
+ {
+  "name": "TyraX Cam",
+  "url": "https://raw.githubusercontent.com/doctorspider42/tyrax-cam/HEAD/altstore.json",
+  "category": "AI"
+ },
+ {
+  "name": "TyraX Mocap",
+  "url": "https://raw.githubusercontent.com/doctorspider42/tyrax-mocap/HEAD/altstore.json",
+  "category": "AI"
+ },
+ {
+  "name": "Null Eigenvalue",
+  "url": "https://raw.githubusercontent.com/doctorspider42/null-eigenvalue/HEAD/altstore.json",
+  "category": "AI"
+ },
+ {
+  "name": "Bisq Mobile",
+  "url": "https://raw.githubusercontent.com/bisq-network/bisq-mobile/HEAD/docs/apps.json",
+  "category": "Finance"
+ },
+ {
+  "name": "Brume Foundation",
+  "url": "https://raw.githubusercontent.com/brume256/wallet/HEAD/altstore.json",
+  "category": "Finance"
+ }
+]

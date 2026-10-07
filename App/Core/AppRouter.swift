@@ -4,7 +4,7 @@ import SwiftUI
 @MainActor
 final class AppRouter: ObservableObject {
 	enum Tab: Hashable {
-		case sources, library, settings
+		case discover, sources, library, settings
 	}
 
 	struct PendingCertificate: Identifiable {
@@ -13,7 +13,7 @@ final class AppRouter: ObservableObject {
 		var profile: URL?
 	}
 
-	@Published var tab: Tab = .library
+	@Published var tab: Tab = .discover
 	@Published var alert: String?
 	@Published var pendingSourceURL: String?
 	@Published var pendingCertificate: PendingCertificate?

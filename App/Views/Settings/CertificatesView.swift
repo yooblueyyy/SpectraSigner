@@ -27,6 +27,7 @@ struct CertificatesView: View {
 							CertificateRow(certificate: cert)
 						}
 					}
+					.cardRow()
 				}
 				.onDelete { offsets in
 					offsets.map { certificates.certificates[$0] }.forEach(certificates.delete)
@@ -46,6 +47,7 @@ struct CertificatesView: View {
 				)
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("Certificates")
 		.toolbar {
 			ToolbarItem(placement: .primaryAction) {
@@ -133,6 +135,7 @@ struct AddCertificateView: View {
 					}
 				}
 			}
+			.spectraBackground()
 			.disabled(working)
 			.navigationTitle("Add Certificate")
 			.navigationBarTitleDisplayMode(.inline)
@@ -240,6 +243,7 @@ struct CertificateDetailView: View {
 				Button("Delete Certificate", role: .destructive) { confirmDelete = true }
 			}
 		}
+		.spectraBackground()
 		.navigationTitle(certificate.displayName)
 		.navigationBarTitleDisplayMode(.inline)
 		.onAppear { nickname = certificate.nickname ?? "" }

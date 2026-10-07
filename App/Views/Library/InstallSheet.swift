@@ -3,14 +3,42 @@ import SwiftUI
 struct InstallSheet: View {
 	@EnvironmentObject private var installer: InstallManager
 
+	private var progress: Double? {
+		switch installer.state {
+		case .transferring(let fraction): return fraction
+		case .installing: return 1
+		default: return nil
+		}
+	}
+
+	private var isFailed: Bool {
+		if case .failed = installer.state { return true }
+		return false
+	}
+
 	var body: some View {
 		VStack(spacing: 18) {
-			if let app = installer.app {
-				AppIconView(url: app.iconURL, size: 72)
-				Text(app.name).font(.title3.weight(.semibold))
+			ZStack {
+				if isFailed {
+					Circle().stroke(Color.orange.opacity(0.3), lineWidth: 8).frame(width: 120, height: 120)
+				} else {
+					SpectraRing(progress: progress, size: 120, lineWidth: 8) { EmptyView() }
+				}
+				AppIconView(url: installer.app?.iconURL, size: 80)
+				if case .installing = installer.state {
+					Image(systemName: "checkmark.circle.fill")
+						.font(.system(size: 30))
+						.foregroundStyle(.white, .green)
+						.offset(x: 42, y: 42)
+						.transition(.scale.combined(with: .opacity))
+				}
 			}
+			.animation(.spring(response: 0.4), value: installer.state)
 
-			status
+			VStack(spacing: 6) {
+				Text(installer.app?.name ?? "Install").font(.title3.weight(.bold))
+				status
+			}
 
 			Spacer(minLength: 0)
 
@@ -18,46 +46,25 @@ struct InstallSheet: View {
 		}
 		.padding(24)
 		.frame(maxWidth: .infinity)
+		.background(AuroraBackground())
 	}
 
 	@ViewBuilder
 	private var status: some View {
 		switch installer.state {
 		case .idle, .starting:
-			ProgressView("Starting install server…")
+			Text("Starting install server…").font(.subheadline).foregroundStyle(.secondary)
 		case .waitingForPrompt:
-			VStack(spacing: 6) {
-				ProgressView()
-				Text("Tap **Install** on the prompt to continue.")
-					.font(.subheadline)
-					.multilineTextAlignment(.center)
-			}
+			Text("Tap **Install** on the prompt to continue.").font(.subheadline).foregroundStyle(.secondary)
 		case .transferring(let fraction):
-			VStack(spacing: 8) {
-				ProgressView(value: fraction)
-				Text("Sending to iOS… \(Int(fraction * 100))%")
-					.font(.subheadline)
-					.foregroundStyle(.secondary)
-			}
+			Text("Sending to iOS · \(Int(fraction * 100))%").font(.subheadline.monospacedDigit()).foregroundStyle(.secondary)
 		case .installing:
-			VStack(spacing: 6) {
-				Image(systemName: "checkmark.circle.fill")
-					.font(.system(size: 36))
-					.foregroundStyle(.green)
-				Text("Installing — check your Home Screen.")
-					.font(.subheadline)
-					.multilineTextAlignment(.center)
-			}
+			Text("Installing — check your Home Screen.").font(.subheadline).foregroundStyle(.secondary)
 		case .failed(let message):
-			VStack(spacing: 6) {
-				Image(systemName: "exclamationmark.triangle.fill")
-					.font(.system(size: 32))
-					.foregroundStyle(.orange)
-				Text(message)
-					.font(.footnote)
-					.foregroundStyle(.secondary)
-					.multilineTextAlignment(.center)
-			}
+			Text(message)
+				.font(.footnote)
+				.foregroundStyle(.secondary)
+				.multilineTextAlignment(.center)
 		}
 	}
 
@@ -65,29 +72,29 @@ struct InstallSheet: View {
 	private var buttons: some View {
 		switch installer.state {
 		case .waitingForPrompt:
-			HStack {
-				Button("Cancel", role: .cancel) { installer.cancel() }
-					.buttonStyle(.bordered)
+			VStack(spacing: 10) {
 				Button("Show Prompt Again") { installer.retryPrompt() }
-					.buttonStyle(.borderedProminent)
+					.buttonStyle(SpectraButtonStyle())
+				Button("Cancel", role: .cancel) { installer.cancel() }
+					.font(.subheadline.weight(.semibold))
 			}
 		case .failed:
-			HStack {
-				Button("Close") { installer.cancel() }
-					.buttonStyle(.bordered)
+			VStack(spacing: 10) {
 				if let app = installer.app {
 					ShareLink(item: app.ipaURL, preview: SharePreview(app.shareFileName)) {
-						Text("Share IPA")
+						Text("Share IPA Instead")
 					}
-					.buttonStyle(.borderedProminent)
+					.buttonStyle(SpectraButtonStyle(tint: .orange))
 				}
+				Button("Close") { installer.cancel() }
+					.font(.subheadline.weight(.semibold))
 			}
 		case .installing:
 			Button("Done") { installer.dismiss() }
-				.buttonStyle(.borderedProminent)
+				.buttonStyle(SpectraButtonStyle(tint: .green))
 		default:
 			Button("Cancel", role: .cancel) { installer.cancel() }
-				.buttonStyle(.bordered)
+				.font(.subheadline.weight(.semibold))
 		}
 	}
 }

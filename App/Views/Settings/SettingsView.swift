@@ -15,17 +15,22 @@ struct SettingsView: View {
 		NavigationStack(path: $path) {
 			List {
 				Section {
-					HStack(spacing: 14) {
-						Image("Logo")
-							.resizable()
-							.frame(width: 56, height: 56)
-							.clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-						VStack(alignment: .leading, spacing: 2) {
-							Text("Spectra Signer").font(.title3.weight(.bold))
+					HStack(spacing: 16) {
+						ZStack {
+							Circle().fill(Spectra.angular).frame(width: 70, height: 70).blur(radius: 14).opacity(0.7)
+							Image("Logo")
+								.resizable()
+								.frame(width: 64, height: 64)
+								.clipShape(RoundedRectangle(cornerRadius: 15, style: .continuous))
+						}
+						VStack(alignment: .leading, spacing: 3) {
+							Text("Spectra Signer").font(.title2.weight(.bold))
 							Text("Version \(version)").font(.caption).foregroundStyle(.secondary)
+							Capsule().fill(Spectra.gradient).frame(width: 90, height: 4).padding(.top, 4)
 						}
 					}
-					.padding(.vertical, 4)
+					.padding(.vertical, 8)
+					.cardRow()
 				}
 
 				Section {
@@ -64,11 +69,15 @@ struct SettingsView: View {
 				}
 
 				Section {
+					NavigationLink(value: Destination.sources) {
+						Label("Sources", systemImage: "globe")
+					}
 					NavigationLink(value: Destination.about) {
 						Label("About", systemImage: "info.circle.fill")
 					}
 				}
 			}
+			.spectraBackground()
 			.navigationTitle("Settings")
 			.navigationDestination(for: Destination.self) { destination in
 				switch destination {
@@ -77,6 +86,7 @@ struct SettingsView: View {
 				case .installation: InstallationSettingsView()
 				case .appearance: AppearanceView()
 				case .storage: StorageView()
+				case .sources: SourceSettingsView()
 				case .about: AboutView()
 				}
 			}
@@ -87,7 +97,7 @@ struct SettingsView: View {
 	}
 
 	enum Destination: Hashable {
-		case certificates, signingDefaults, installation, appearance, storage, about
+		case certificates, signingDefaults, installation, appearance, storage, sources, about
 	}
 }
 
@@ -122,6 +132,7 @@ struct SigningDefaultsView: View {
 				Button("Reset to Defaults", role: .destructive) { options = SignOptions() }
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("Signing Options")
 		.onChange(of: options) { SignOptions.defaults = $0 }
 	}
@@ -151,6 +162,7 @@ struct InstallationSettingsView: View {
 				Text("Smaller .ipa files for sharing, but signing takes longer.")
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("Installation")
 	}
 }
@@ -192,6 +204,7 @@ struct AppearanceView: View {
 				.padding(.vertical, 6)
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("Appearance")
 	}
 }
@@ -234,6 +247,7 @@ struct StorageView: View {
 				Button(Action.everything.rawValue, role: .destructive) { confirm = .everything }
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("Storage")
 		.onAppear(perform: refresh)
 		.confirmationDialog(confirm?.rawValue ?? "", isPresented: Binding(get: { confirm != nil }, set: { if !$0 { confirm = nil } }), titleVisibility: .visible) {
@@ -294,6 +308,61 @@ struct AboutView: View {
 				Link("ZIPFoundation", destination: URL(string: "https://github.com/weichsel/ZIPFoundation")!)
 			}
 		}
+		.spectraBackground()
 		.navigationTitle("About")
+	}
+}
+
+struct SourceSettingsView: View {
+	@EnvironmentObject private var sources: SourceStore
+	@State private var confirmRemoveAll = false
+
+	var body: some View {
+		Form {
+			Section {
+				LabeledContent("Sources", value: "\(sources.sources.count)")
+				LabeledContent("Built-in", value: "\(sources.sources.filter { $0.isBuiltin == true }.count) of \(SourceStore.builtin.count)")
+				LabeledContent("Apps Available", value: "\(sources.totalApps)")
+				if let last = sources.lastRefresh {
+					LabeledContent("Last Updated", value: last.formatted(date: .omitted, time: .shortened))
+				}
+			}
+
+			Section {
+				Button {
+					Task { await sources.refreshAll() }
+				} label: {
+					HStack {
+						Label("Refresh All Sources", systemImage: "arrow.clockwise")
+						if sources.isRefreshing {
+							Spacer()
+							ProgressView()
+						}
+					}
+				}
+				.disabled(sources.isRefreshing)
+
+				if sources.missingBuiltinCount > 0 {
+					Button {
+						Task { await sources.restoreBuiltins() }
+					} label: {
+						Label("Restore \(sources.missingBuiltinCount) Built-in Sources", systemImage: "arrow.counterclockwise")
+					}
+				}
+			} footer: {
+				Text("Spectra Signer comes with \(SourceStore.builtin.count) hand-picked sources of open-source and developer-published apps. Remove any you don't want from the Sources tab.")
+			}
+
+			Section {
+				Button("Remove All Sources", role: .destructive) { confirmRemoveAll = true }
+			}
+		}
+		.spectraBackground()
+		.navigationTitle("Sources")
+		.confirmationDialog("Remove all sources?", isPresented: $confirmRemoveAll, titleVisibility: .visible) {
+			Button("Remove All", role: .destructive) { sources.removeAll() }
+		} message: {
+			Text("You can restore the built-in ones later.")
+		}
 	}
 }

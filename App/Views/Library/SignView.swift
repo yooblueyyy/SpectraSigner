@@ -37,10 +37,10 @@ struct SignView: View {
 									Image(uiImage: customIcon)
 										.resizable()
 										.scaledToFill()
-										.frame(width: 64, height: 64)
-										.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+										.frame(width: 76, height: 76)
+										.clipShape(RoundedRectangle(cornerRadius: 17, style: .continuous))
 								} else {
-									AppIconView(url: app.iconURL, size: 64)
+									AppIconView(url: app.iconURL, size: 76)
 								}
 								Image(systemName: "pencil.circle.fill")
 									.symbolRenderingMode(.multicolor)
@@ -53,10 +53,11 @@ struct SignView: View {
 
 						VStack(alignment: .leading, spacing: 4) {
 							TextField("App Name", text: $options.name)
-								.font(.headline)
-							Text("Tap the icon to change it")
+								.font(.title3.weight(.bold))
+							Text("\(app.version) · \(app.bundleID)")
 								.font(.caption)
 								.foregroundStyle(.secondary)
+								.lineLimit(1)
 						}
 					}
 					.padding(.vertical, 4)
@@ -135,17 +136,27 @@ struct SignView: View {
 					Toggle("Delete Unsigned Copy", isOn: $options.deleteUnsignedAfterSigning)
 				}
 			}
+			.spectraBackground()
 			.disabled(stage != nil)
+			.safeAreaInset(edge: .bottom) {
+				Button {
+					sign()
+				} label: {
+					Label(options.installAfterSigning ? "Sign & Install" : "Sign", systemImage: "signature")
+				}
+				.buttonStyle(SpectraButtonStyle())
+				.disabled(!canSign)
+				.opacity(canSign ? 1 : 0.5)
+				.padding(.horizontal, 20)
+				.padding(.top, 10)
+				.padding(.bottom, 6)
+				.background(.bar)
+			}
 			.navigationTitle("Sign")
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
 					Button("Cancel") { dismiss() }.disabled(stage != nil)
-				}
-				ToolbarItem(placement: .confirmationAction) {
-					Button("Sign") { sign() }
-						.fontWeight(.semibold)
-						.disabled(!canSign)
 				}
 			}
 			.overlay {
