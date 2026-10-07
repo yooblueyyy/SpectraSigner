@@ -26,6 +26,9 @@ struct SignView: View {
 		certificates.certificates.first { $0.id == certificateID }
 	}
 
+	/// A bundle ID that won't collide with the copy of this app already on the device.
+	private var separateCopyID: String { "\(app.bundleID).copy" }
+
 	private var canSign: Bool { stage == nil && (options.adhoc || certificate != nil) }
 
 	var body: some View {
@@ -71,10 +74,18 @@ struct SignView: View {
 					}
 				}
 
-				Section("Identity") {
+				Section {
 					LabeledField(title: "Bundle ID", text: $options.bundleID, placeholder: app.bundleID)
+					Toggle("Install as Separate Copy", isOn: Binding(
+						get: { options.bundleID == separateCopyID },
+						set: { options.bundleID = $0 ? separateCopyID : "" }
+					))
 					LabeledField(title: "Version", text: $options.version, placeholder: app.version)
 					LabeledField(title: "Minimum iOS", text: $options.minimumOS, placeholder: app.minimumOS ?? "Unchanged")
+				} header: {
+					Text("Identity")
+				} footer: {
+					Text("iOS keeps one app per bundle ID. Use a separate copy to install next to a version that's already on your device instead of replacing it.")
 				}
 
 				Section {
