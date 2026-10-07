@@ -55,4 +55,5 @@ enum Prefs {
 	static let compressIPAs = "compressIPAs"
 	static let keepAliveAudio = "keepAliveAudio"
 	static let librarySort = "librarySort"
+	static let manifestService = "manifestService"
 }

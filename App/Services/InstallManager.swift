@@ -75,10 +75,9 @@ final class InstallManager: ObservableObject {
 			switch result {
 			case .success:
 				self.state = .waitingForPrompt
-				self.note("Server ready at \(server.host):\(server.port)")
-				self.note("Certificates: \(server.chainSummary)")
+				self.note("Serving the app at \(server.host):\(server.port)")
 				Task { @MainActor in
-					await self.selfTest(server.manifestURL)
+					await self.selfTest(server)
 					self.openInstallLink(server.installURL)
 				}
 			case .failure(let error):
@@ -97,22 +96,27 @@ final class InstallManager: ObservableObject {
 		openInstallLink(server.installURL)
 	}
 
-	/// Fetches the manifest the way iOS will (DNS, TLS, HTTP), so the log shows where a missing prompt fails.
-	private func selfTest(_ url: URL) async {
-		var request = URLRequest(url: url)
-		request.timeoutInterval = 8
-		let delegate = TrustLogger { [weak self] line in
-			Task { @MainActor in self?.note(line) }
-		}
+	/// Checks both halves iOS needs before asking it to install, so the log shows where a missing prompt fails:
+	/// the manifest from the web service, and the .ipa from the local server.
+	private func selfTest(_ server: InstallServer) async {
+		var manifest = URLRequest(url: server.manifestURL)
+		manifest.timeoutInterval = 10
 		do {
-			let (data, response) = try await URLSession.shared.data(for: request, delegate: delegate)
+			let (data, response) = try await URLSession.shared.data(for: manifest)
 			let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-			note("Self-test: HTTP \(status), \(data.count) bytes")
+			note(status == 200 ? "Manifest OK (\(data.count) bytes)" : "Manifest service returned HTTP \(status)")
 		} catch {
-			let nsError = error as NSError
-			var detail = "\(nsError.domain) \(nsError.code)"
-			if let stream = nsError.userInfo["_kCFStreamErrorCodeKey"] { detail += ", stream \(stream)" }
-			note("Self-test failed: \(nsError.localizedDescription) (\(detail))")
+			note("Manifest service unreachable: \(error.localizedDescription)")
+		}
+
+		var ipa = URLRequest(url: server.ipaURL)
+		ipa.httpMethod = "HEAD"
+		ipa.timeoutInterval = 5
+		do {
+			let (_, response) = try await URLSession.shared.data(for: ipa)
+			note("Local app download: HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
+		} catch {
+			note("Local app download failed: \(error.localizedDescription)")
 		}
 	}
 
@@ -155,36 +159,6 @@ final class InstallManager: ObservableObject {
 		server?.stop()
 		server = nil
 		KeepAlive.shared.end()
-	}
-}
-
-/// Logs the certificates the install server presented and whether iOS trusts them.
-private final class TrustLogger: NSObject, URLSessionTaskDelegate {
-	private let log: (String) -> Void
-
-	init(log: @escaping (String) -> Void) {
-		self.log = log
-	}
-
-	func urlSession(
-		_ session: URLSession,
-		task: URLSessionTask,
-		didReceive challenge: URLAuthenticationChallenge,
-		completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-	) {
-		guard let trust = challenge.protectionSpace.serverTrust else {
-			return completionHandler(.performDefaultHandling, nil)
-		}
-		let presented = (SecTrustCopyCertificateChain(trust) as? [SecCertificate] ?? [])
-			.map { SecCertificateCopySubjectSummary($0) as String? ?? "?" }
-		log("Server sent \(presented.count): \(presented.joined(separator: " → "))")
-		var error: CFError?
-		if SecTrustEvaluateWithError(trust, &error) {
-			log("iOS trusts the certificate")
-		} else {
-			log("iOS rejects the certificate: \((error as Error?)?.localizedDescription ?? "unknown")")
-		}
-		completionHandler(.performDefaultHandling, nil)
 	}
 }
 

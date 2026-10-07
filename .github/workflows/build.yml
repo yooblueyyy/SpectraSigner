@@ -24,9 +24,6 @@ jobs:
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - name: Fetch install-server certificate
-        run: sh scripts/fetch-server-cert.sh
-
       - name: Generate Xcode project
         run: xcodegen generate
 

@@ -1,0 +1,5 @@
+{
+  "name": "spectra-manifest",
+  "private": true,
+  "description": "Serves itms-services install manifests for Spectra Signer's on-device installer."
+}

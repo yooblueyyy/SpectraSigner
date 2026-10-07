@@ -32,10 +32,21 @@ To build locally on a Mac with Xcode 16 or newer:
 
 ```sh
 brew install xcodegen
-sh scripts/fetch-server-cert.sh   # certificate for the on-device install server
 xcodegen generate
 open SpectraSigner.xcodeproj
 ```
+
+## Installing apps
+
+iOS installs an app from an `itms-services://` link only if the install manifest comes over HTTPS
+with a publicly trusted certificate. A server on the phone can't have one, because a shared
+certificate for localhost is revoked as soon as its private key is published. So the manifest comes
+from `spectra-manifest/`, a small Vercel function, while the signed .ipa itself is served over plain
+HTTP from 127.0.0.1 on the phone and never uploaded. The manifest service only receives the app's
+name, bundle ID and version.
+
+To run your own copy, deploy it with `cd spectra-manifest && vercel deploy --prod` and enter its URL
+in Settings → Installation.
 
 ## Project layout
 
@@ -44,14 +55,14 @@ open SpectraSigner.xcodeproj
 | `App/` | SwiftUI app: views, stores (library, certificates, sources, downloads) and services (import, signing, install server) |
 | `Packages/ZSignKit/` | Swift package wrapping the [zsign](https://github.com/zhlynn/zsign) signing engine (MIT) with an Objective-C++ bridge |
 | `Support/Info.plist` | File types, URL scheme and background modes |
-| `scripts/` | Install-server certificate fetcher and the app-icon generator |
+| `spectra-manifest/` | Vercel function that serves install manifests over HTTPS (see below) |
+| `scripts/` | App-icon generator, and `share-ipa.bat` to share the latest build over a Cloudflare tunnel |
 
 ## Credits
 
 - [zsign](https://github.com/zhlynn/zsign) by zhlynn: Mach-O code signing (MIT, see `Packages/ZSignKit/LICENSE-zsign`)
 - [OpenSSL](https://github.com/krzyzanowskim/OpenSSL) Swift package by Marcin Krzyżanowski
 - [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) by Thomas Zoechling
-- [backloop.dev](https://backloop.dev): trusted HTTPS for localhost
 
 ## License
 

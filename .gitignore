@@ -9,9 +9,5 @@ out/
 .build/
 DerivedData/
 
-# Fetched at build time (scripts/fetch-server-cert.sh)
-Resources/server.p12
-Resources/commonName.txt
-
 .DS_Store
 xcuserdata/

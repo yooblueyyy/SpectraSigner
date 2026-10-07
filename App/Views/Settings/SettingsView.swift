@@ -141,13 +141,19 @@ struct SigningDefaultsView: View {
 struct InstallationSettingsView: View {
 	@AppStorage(Prefs.keepAliveAudio) private var keepAlive = true
 	@AppStorage(Prefs.compressIPAs) private var compress = false
+	@AppStorage(Prefs.manifestService) private var manifestService = ""
 
 	var body: some View {
 		Form {
 			Section {
-				LabeledContent("Install Server", value: InstallServer.isAvailable ? "Ready" : "Unavailable")
+				TextField(InstallServer.defaultManifestService, text: $manifestService)
+					.keyboardType(.URL)
+					.textInputAutocapitalization(.never)
+					.autocorrectionDisabled()
+			} header: {
+				Text("Manifest Service")
 			} footer: {
-				Text("Signed apps install through a secure server running on this device, the same way enterprise apps are distributed. Nothing leaves your device.")
+				Text("iOS reads an app's install details over HTTPS, so they come from this service; the app itself is copied straight from this device and never uploaded. Only its name, bundle ID and version are sent. Leave empty to use the default.")
 			}
 
 			Section {

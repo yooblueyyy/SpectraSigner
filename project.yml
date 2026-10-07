@@ -9,8 +9,8 @@ options:
 
 settings:
   base:
-    MARKETING_VERSION: "1.1.4"
-    CURRENT_PROJECT_VERSION: "6"
+    MARKETING_VERSION: "1.2.0"
+    CURRENT_PROJECT_VERSION: "7"
 
 packages:
   ZSignKit:
@@ -25,10 +25,6 @@ targets:
     platform: iOS
     sources:
       - path: App
-      # server.p12 + commonName.txt for the on-device install server (scripts/fetch-server-cert.sh)
-      - path: Resources
-        optional: true
-        buildPhase: resources
     settings:
       base:
         PRODUCT_NAME: SpectraSigner

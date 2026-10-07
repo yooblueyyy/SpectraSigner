@@ -1,12 +1,13 @@
 import Foundation
 import Network
-import Security
 
-/// A tiny HTTPS server on the device that serves an install manifest and the signed .ipa,
-/// so iOS can install it through an `itms-services://` link.
+/// A tiny HTTP server on the device that serves the signed .ipa, so iOS can install it
+/// through an `itms-services://` link.
 ///
-/// iOS only accepts manifests over HTTPS with a trusted certificate, so the build bundles a
-/// publicly trusted certificate for a domain that resolves to 127.0.0.1 (see scripts/fetch-server-cert.sh).
+/// iOS only accepts the install manifest over HTTPS with a publicly trusted certificate, which
+/// a server on the phone can't have (a shared certificate for localhost gets revoked as soon as
+/// its key is published). So the manifest comes from a small web service (spectra-manifest/),
+/// and only the .ipa, which iOS will fetch over plain HTTP, is served from here on 127.0.0.1.
 final class InstallServer {
 	struct Payload {
 		let ipaURL: URL
@@ -17,25 +18,29 @@ final class InstallServer {
 	}
 
 	enum Failure: LocalizedError {
-		case missingCertificate, badCertificate, couldNotStart(String)
+		case badManifestService, couldNotStart(String)
 
 		var errorDescription: String? {
 			switch self {
-			case .missingCertificate:
-				return "This build is missing the local install-server certificate. Rebuild with scripts/fetch-server-cert.sh, or use Share to install with another tool."
-			case .badCertificate:
-				return "The local install-server certificate couldn't be loaded."
+			case .badManifestService:
+				return "The manifest service address in Settings → Installation isn't a valid https:// URL."
 			case .couldNotStart(let reason):
 				return "The local install server couldn't start: \(reason)"
 			}
 		}
 	}
 
+	/// Where install manifests come from unless changed in Settings → Installation.
+	static let defaultManifestService = "https://spectra-manifest.vercel.app"
+
+	static var manifestService: String {
+		let custom = UserDefaults.standard.string(forKey: Prefs.manifestService)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+		return custom.isEmpty ? defaultManifestService : custom
+	}
+
 	private let payload: Payload
-	private let identity: SecIdentity
-	/// The leaf certificate followed by its intermediates, sent during the TLS handshake.
-	private let chain: [SecCertificate]
-	let host: String
+	private let service: URL
+	let host = "127.0.0.1"
 	private let token = UUID().uuidString.lowercased()
 	private var listener: NWListener?
 	private let queue = DispatchQueue(label: "dev.spectra.install-server")
@@ -45,92 +50,58 @@ final class InstallServer {
 	var onProgress: ((Int64, Int64) -> Void)?
 	/// Called once the whole .ipa has been delivered to iOS.
 	var onTransferComplete: (() -> Void)?
-	/// Human-readable events (connections, TLS errors, requests) for troubleshooting.
+	/// Human-readable events (connections, requests) for troubleshooting.
 	var onEvent: ((String) -> Void)?
 
 	init(payload: Payload) throws {
-		let loaded = try Self.loadIdentity()
+		var base = Self.manifestService
+		while base.hasSuffix("/") { base.removeLast() }
+		guard let service = URL(string: base), service.scheme == "https", service.host != nil else {
+			throw Failure.badManifestService
+		}
 		self.payload = payload
-		self.identity = loaded.identity
-		self.chain = loaded.chain
-		self.host = loaded.host
+		self.service = service
 	}
 
 	private(set) var port: UInt16 = 0
-	private var baseURL: String { "https://\(host):\(port)/\(token)" }
-	var manifestURL: URL { URL(string: "\(baseURL)/manifest.plist")! }
+	private var baseURL: String { "http://\(host):\(port)/\(token)" }
+	var ipaURL: URL { URL(string: "\(baseURL)/app.ipa")! }
 
-	/// The link that asks iOS to install the app. The manifest URL goes in unencoded, as Feather does;
-	/// percent-encoding every character of it can stop iOS from showing the prompt.
+	var manifestURL: URL {
+		var components = URLComponents(url: service.appendingPathComponent("api/manifest"), resolvingAgainstBaseURL: false)!
+		var items = [
+			URLQueryItem(name: "ipa", value: ipaURL.absoluteString),
+			URLQueryItem(name: "bundle", value: payload.bundleID),
+			URLQueryItem(name: "version", value: payload.version),
+			URLQueryItem(name: "title", value: payload.title),
+		]
+		if payload.iconURL != nil {
+			items.append(URLQueryItem(name: "icon", value: "\(baseURL)/icon.png"))
+		}
+		components.queryItems = items
+		// URLQueryItem leaves "+" alone, which servers read as a space.
+		components.percentEncodedQuery = components.percentEncodedQuery?.replacingOccurrences(of: "+", with: "%2B")
+		return components.url!
+	}
+
+	/// The link that asks iOS to install the app. The manifest URL has its own query string, so it's
+	/// encoded as a single parameter value.
 	var installURL: URL {
-		URL(string: "itms-services://?action=download-manifest&url=\(manifestURL.absoluteString)")!
-	}
-
-	static var isAvailable: Bool { Bundle.main.url(forResource: "server", withExtension: "p12") != nil }
-
-	private static func loadIdentity() throws -> (identity: SecIdentity, chain: [SecCertificate], host: String) {
-		guard
-			let p12URL = Bundle.main.url(forResource: "server", withExtension: "p12"),
-			let data = try? Data(contentsOf: p12URL)
-		else { throw Failure.missingCertificate }
-
-		var items: CFArray?
-		let options = [kSecImportExportPassphrase as String: "spectra"] as CFDictionary
-		guard
-			SecPKCS12Import(data as CFData, options, &items) == errSecSuccess,
-			let first = (items as? [[String: Any]])?.first,
-			let identityRef = first[kSecImportItemIdentity as String]
-		else { throw Failure.badCertificate }
-
-		var host = "local.backloop.dev"
-		if
-			let url = Bundle.main.url(forResource: "commonName", withExtension: "txt"),
-			let name = try? String(contentsOf: url, encoding: .utf8).trimmingCharacters(in: .whitespacesAndNewlines),
-			!name.isEmpty
-		{
-			host = name.hasPrefix("*.") ? "local" + name.dropFirst(1) : name
-		}
-		let identity = identityRef as! SecIdentity
-		var leaf: SecCertificate?
-		SecIdentityCopyCertificate(identity, &leaf)
-		guard let leaf else { throw Failure.badCertificate }
-
-		// The intermediates are bundled as chain1.der, chain2.der, … (scripts/fetch-server-cert.sh).
-		// They're loaded explicitly: the chain SecPKCS12Import builds can leave out the
-		// cross-signed root that iOS needs, and then every TLS handshake fails.
-		var chain = [leaf]
-		for index in 1... {
-			guard
-				let url = Bundle.main.url(forResource: "chain\(index)", withExtension: "der"),
-				let der = try? Data(contentsOf: url),
-				let certificate = SecCertificateCreateWithData(nil, der as CFData)
-			else { break }
-			chain.append(certificate)
-		}
-		return (identity, chain, host)
-	}
-
-	/// The certificates the server presents, for the install log.
-	var chainSummary: String {
-		chain.map { SecCertificateCopySubjectSummary($0) as String? ?? "?" }.joined(separator: " → ")
+		var unreserved = CharacterSet.alphanumerics
+		unreserved.insert(charactersIn: "-._~")
+		let encoded = manifestURL.absoluteString.addingPercentEncoding(withAllowedCharacters: unreserved) ?? ""
+		return URL(string: "itms-services://?action=download-manifest&url=\(encoded)")!
 	}
 
 	func start(ready: @escaping (Result<Void, Error>) -> Void) {
-		let tls = NWProtocolTLS.Options()
-		// Without the intermediates iOS can't verify the manifest's certificate and never shows the install prompt.
-		guard let secIdentity = sec_identity_create_with_certificates(identity, chain as CFArray) ?? sec_identity_create(identity) else {
-			ready(.failure(Failure.badCertificate))
-			return
-		}
-		sec_protocol_options_set_local_identity(tls.securityProtocolOptions, secIdentity)
-		sec_protocol_options_set_min_tls_protocol_version(tls.securityProtocolOptions, .TLSv12)
-
-		let params = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
+		let params = NWParameters.tcp
 		params.allowLocalEndpointReuse = true
+		// Only reachable from this device, not from the rest of the network.
+		params.requiredLocalEndpoint = .hostPort(host: .ipv4(.loopback), port: .any)
 
 		let listener: NWListener
 		do {
-			listener = try NWListener(using: params, on: .any)
+			listener = try NWListener(using: params)
 		} catch {
 			ready(.failure(Failure.couldNotStart(error.localizedDescription)))
 			return
@@ -165,18 +136,10 @@ final class InstallServer {
 	// MARK: - HTTP
 
 	private func accept(_ connection: NWConnection) {
-		onEvent?("Incoming connection from \(connection.endpoint)")
 		connection.stateUpdateHandler = { [weak self] state in
-			switch state {
-			case .ready:
-				self?.onEvent?("TLS handshake OK")
-			case .failed(let error):
+			if case .failed(let error) = state {
 				self?.onEvent?("Connection failed: \(error.localizedDescription)")
 				connection.cancel()
-			case .waiting(let error):
-				self?.onEvent?("Connection waiting: \(error.localizedDescription)")
-			default:
-				break
 			}
 		}
 		connection.start(queue: queue)
@@ -218,8 +181,6 @@ final class InstallServer {
 		guard path.hasPrefix("/\(token)/") else { return sendStatus(404, on: connection) }
 
 		switch path.dropFirst(token.count + 2) {
-		case "manifest.plist":
-			sendData(manifest(), type: "text/xml", headOnly: headOnly, on: connection)
 		case "app.ipa":
 			sendFile(payload.ipaURL, type: "application/octet-stream", range: headers["range"], headOnly: headOnly, track: true, on: connection)
 		case "icon.png":
@@ -231,26 +192,6 @@ final class InstallServer {
 		default:
 			sendStatus(404, on: connection)
 		}
-	}
-
-	private func manifest() -> Data {
-		var assets: [[String: String]] = [["kind": "software-package", "url": "\(baseURL)/app.ipa"]]
-		if payload.iconURL != nil {
-			assets.append(["kind": "display-image", "url": "\(baseURL)/icon.png"])
-			assets.append(["kind": "full-size-image", "url": "\(baseURL)/icon.png"])
-		}
-		let plist: [String: Any] = [
-			"items": [[
-				"assets": assets,
-				"metadata": [
-					"bundle-identifier": payload.bundleID,
-					"bundle-version": payload.version,
-					"kind": "software",
-					"title": payload.title,
-				],
-			]],
-		]
-		return (try? PropertyListSerialization.data(fromPropertyList: plist, format: .xml, options: 0)) ?? Data()
 	}
 
 	private static func reason(_ status: Int) -> String {
@@ -284,13 +225,6 @@ final class InstallServer {
 
 	private func sendStatus(_ status: Int, on connection: NWConnection) {
 		connection.send(content: header(status: status, type: "text/plain", length: 0), completion: .contentProcessed { _ in })
-		close(connection)
-	}
-
-	private func sendData(_ data: Data, type: String, headOnly: Bool, on connection: NWConnection) {
-		var out = header(status: 200, type: type, length: UInt64(data.count))
-		if !headOnly { out.append(data) }
-		connection.send(content: out, completion: .contentProcessed { _ in })
 		close(connection)
 	}
 
