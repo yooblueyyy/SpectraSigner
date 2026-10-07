@@ -94,7 +94,8 @@ struct AddCertificateView: View {
 	@State private var profile: URL?
 	@State private var password = ""
 	@State private var nickname = ""
-	@State private var picking: PickTarget?
+	@State private var showPicker = false
+	@State private var pickTarget: PickTarget = .p12
 	@State private var working = false
 	@State private var error: String?
 
@@ -109,12 +110,12 @@ struct AddCertificateView: View {
 		NavigationStack {
 			Form {
 				Section {
-					fileRow(title: "Certificate", detail: p12?.lastPathComponent, icon: "key.fill") { picking = .p12 }
-					fileRow(title: "Provisioning Profile", detail: profile?.lastPathComponent, icon: "doc.badge.gearshape.fill") { picking = .profile }
+					fileRow(title: "Certificate", detail: p12?.lastPathComponent, icon: "key.fill") { pick(.p12) }
+					fileRow(title: "Provisioning Profile", detail: profile?.lastPathComponent, icon: "doc.badge.gearshape.fill") { pick(.profile) }
 				} header: {
 					Text("Files")
 				} footer: {
-					Text("A .p12 (or .pfx) certificate with its private key, and the .mobileprovision made for it.")
+					Text("A .p12 (or .pfx) certificate with its private key, and the .mobileprovision made for it. You can select both files at once.")
 				}
 
 				Section("Password") {
@@ -154,15 +155,59 @@ struct AddCertificateView: View {
 				}
 			}
 			.fileImporter(
-				isPresented: Binding(get: { picking != nil }, set: { if !$0 { picking = nil } }),
-				allowedContentTypes: picking == .profile ? [.mobileProvision, .data] : [.pkcs12, .data]
+				isPresented: $showPicker,
+				allowedContentTypes: [.pkcs12, .mobileProvision, .data],
+				allowsMultipleSelection: true
 			) { result in
-				guard case .success(let url) = result else { return }
-				let target = picking
-				picking = nil
-				if target == .profile { profile = url } else { p12 = url }
+				switch result {
+				case .success(let urls):
+					receive(urls)
+				case .failure(let failure):
+					error = failure.localizedDescription
+				}
 			}
 		}
+	}
+
+	private func pick(_ target: PickTarget) {
+		pickTarget = target
+		showPicker = true
+	}
+
+	/// Copies picked files into the app right away (while access is granted) and slots them
+	/// by extension, so the certificate and profile can be chosen together.
+	private func receive(_ urls: [URL]) {
+		error = nil
+		for url in urls {
+			guard let local = copyToTemp(url) else {
+				error = "Couldn't read \(url.lastPathComponent)."
+				continue
+			}
+			switch url.pathExtension.lowercased() {
+			case "p12", "pfx":
+				p12 = local
+			case "mobileprovision", "provisionprofile":
+				profile = local
+			default:
+				if pickTarget == .profile { profile = local } else { p12 = local }
+			}
+		}
+	}
+
+	private func copyToTemp(_ url: URL) -> URL? {
+		let scoped = url.startAccessingSecurityScopedResource()
+		defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+		guard let dir = try? Paths.makeTemp("cert") else { return nil }
+		let dest = dir.appendingPathComponent(url.lastPathComponent)
+		if (try? FileManager.default.copyItem(at: url, to: dest)) != nil { return dest }
+
+		// Cloud-backed providers (iCloud Drive, Google Drive…) may need a coordinated read.
+		var coordinatorError: NSError?
+		var copied: URL?
+		NSFileCoordinator().coordinate(readingItemAt: url, options: .withoutChanges, error: &coordinatorError) { readable in
+			if (try? FileManager.default.copyItem(at: readable, to: dest)) != nil { copied = dest }
+		}
+		return copied
 	}
 
 	private func fileRow(title: String, detail: String?, icon: String, action: @escaping () -> Void) -> some View {
